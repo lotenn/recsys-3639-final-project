@@ -1,6 +1,8 @@
-from torch import nn, cat
+from torch import nn, cat, sort, no_grad
 from torch.nn import Embedding
+from torch.utils.data import DataLoader
 
+from src.eval.rank_evaluator import RankMetric, RankEvaluator
 from src.model.layers import EmbeddingsAggregatorLayer, L2NormLayer
 
 
@@ -56,3 +58,39 @@ class CandidateGeneration(nn.Module):
         logits = self.logits(user)
 
         return logits, user
+
+    def _calc_metric(self, val_loader: DataLoader, rank_eval, metric: RankMetric) -> float:
+        """
+        Calculate the metric
+        :param val_loader: DataLoader
+        :param metric: str, the metric to calculate
+        :return:
+        """
+        score = 0
+        with no_grad():
+            for batch in val_loader:
+                positives, negatives, search, features, labels = batch
+                logits, _ = self.forward(positives, negatives, search, features)
+                _, candidates = sort(logits, descending=True, dim=-1)
+                score += getattr(rank_eval, f"_batch_{metric}")(labels, candidates)
+        return score / len(val_loader)
+
+    def mrr(self, val_loader: DataLoader, k: int) -> float:
+        """
+        Mean Reciprocal Rank @ top_K
+        :param val_loader: DataLoader
+        :param k: int, the top K
+        :return: the MRR score for the given dataset
+        """
+        rank_eval = RankEvaluator(top_k=k)
+        return self._calc_metric(val_loader, rank_eval, RankMetric.MRR)
+
+    def hit_rate(self, val_loader: DataLoader, k: int) -> float:
+        """
+        Hit Ratio @ top_K
+        :param val_loader: DataLoader
+        :param k: int, the top K
+        :return: the hit rate score for the given dataset
+        """
+        rank_eval = RankEvaluator(top_k=k)
+        return self._calc_metric(val_loader, rank_eval, RankMetric.HIT_RATE)
