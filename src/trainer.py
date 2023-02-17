@@ -52,7 +52,7 @@ class Trainer:
         search = search.to(self.device)
         features = features.to(self.device)
         targets = targets.to(self.device)
-        logits, _ = self.model(positives, negatives, search, features)
-        loss = self.criterion(logits, targets)
+        predictions, _ = self.model(positives, negatives, search, features)
+        loss = self.criterion(predictions, targets)
         return loss
 

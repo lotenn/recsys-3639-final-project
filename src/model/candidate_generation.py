@@ -28,24 +28,23 @@ class CandidateGeneration(nn.Module):
         )
 
         # FC layers to generate user vector
-        layers = [
-            nn.Linear(embedding_dim * 3 + n_features, fc_layers[0]),
-            nn.ReLU(),
-            nn.BatchNorm1d(fc_layers[0]),
-        ]
-
+        fc_layers = list(fc_layers)
+        fc_layers.insert(0, embedding_dim * 3 + n_features)
+        layers = []
         if len(fc_layers) > 1:
             for in_dim, out_dim in zip(fc_layers[:-1], fc_layers[1:]):
-                layers.append(nn.Linear(in_dim, out_dim))
-                layers.append(nn.ReLU())
-                layers.append(nn.BatchNorm1d(out_dim))
+                layers.extend([
+                    nn.Linear(in_dim, out_dim),
+                    nn.BatchNorm1d(out_dim),
+                    nn.ReLU()
+                ])
 
         layers.append(nn.Linear(fc_layers[-1], user_dim))
         self.fc = nn.Sequential(*layers)
 
-        self.logits = nn.Sequential(
+        self.output = nn.Sequential(
             nn.Linear(user_dim, n_items),
-            nn.Softmax(dim=1)
+            nn.LogSoftmax(dim=1)
         )
 
     def forward(self, positives, negatives, search, features):
@@ -55,9 +54,9 @@ class CandidateGeneration(nn.Module):
 
         input_ = cat([positive_embeddings, negative_embeddings, search_embeddings, features], dim=1)
         user = self.fc(input_)
-        logits = self.logits(user)
+        predictions = self.output(user)
 
-        return logits, user
+        return predictions, user
 
     def _calc_metric(self, val_loader: DataLoader, rank_eval, metric: RankMetric, device) -> float:
         """
