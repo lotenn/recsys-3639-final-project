@@ -59,7 +59,7 @@ class CandidateGeneration(nn.Module):
 
         return logits, user
 
-    def _calc_metric(self, val_loader: DataLoader, rank_eval, metric: RankMetric) -> float:
+    def _calc_metric(self, val_loader: DataLoader, rank_eval, metric: RankMetric, device) -> float:
         """
         Calculate the metric
         :param val_loader: DataLoader
@@ -70,27 +70,37 @@ class CandidateGeneration(nn.Module):
         with no_grad():
             for batch in val_loader:
                 positives, negatives, search, features, labels = batch
+                positives = positives.to(device)
+                negatives = negatives.to(device)
+                search = search.to(device)
+                features = features.to(device)
+
                 logits, _ = self.forward(positives, negatives, search, features)
                 _, candidates = sort(logits, descending=True, dim=-1)
+
+                labels, candidates = labels.to('cpu'), candidates.to('cpu')
+
                 score += getattr(rank_eval, f"_batch_{metric}")(labels, candidates)
         return score / len(val_loader)
 
-    def mrr(self, val_loader: DataLoader, k: int) -> float:
+    def mrr(self, val_loader: DataLoader, k: int, device) -> float:
         """
         Mean Reciprocal Rank @ top_K
+        :param device: torch.device
         :param val_loader: DataLoader
         :param k: int, the top K
         :return: the MRR score for the given dataset
         """
         rank_eval = RankEvaluator(top_k=k)
-        return self._calc_metric(val_loader, rank_eval, RankMetric.MRR)
+        return self._calc_metric(val_loader, rank_eval, RankMetric.MRR, device)
 
-    def hit_rate(self, val_loader: DataLoader, k: int) -> float:
+    def hit_rate(self, val_loader: DataLoader, k: int, device) -> float:
         """
         Hit Ratio @ top_K
+        :param device: torch.device
         :param val_loader: DataLoader
         :param k: int, the top K
         :return: the hit rate score for the given dataset
         """
         rank_eval = RankEvaluator(top_k=k)
-        return self._calc_metric(val_loader, rank_eval, RankMetric.HIT_RATE)
+        return self._calc_metric(val_loader, rank_eval, RankMetric.HIT_RATE, device)

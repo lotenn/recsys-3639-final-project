@@ -31,17 +31,17 @@ class Popularity(object):
             score += getattr(rank_eval, f"_batch_{metric}")(labels, candidates)
         return score / len(val_loader)
 
-    def mrr(self, val_loader: DataLoader, k: int) -> float:
+    def mrr(self, val_loader: DataLoader, k: int, **kwargs) -> float:
         """
         Mean Reciprocal Rank @ top_K
         :param val_loader: DataLoader
         :param k: int, the top K
-        :return: the MRR score for the given dataset
+        :return: the MRR score for the given datasets
         """
         rank_eval = RankEvaluator(top_k=k)
         return self._calc_metric(val_loader, rank_eval, RankMetric.MRR)
 
-    def hit_rate(self, val_loader: DataLoader, k: int) -> float:
+    def hit_rate(self, val_loader: DataLoader, k: int, **kwargs) -> float:
         """
         Hit Ratio @ top_K
         :param val_loader: DataLoader
