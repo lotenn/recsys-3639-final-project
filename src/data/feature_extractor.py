@@ -1,8 +1,8 @@
 import itertools as it
 import math
-
 import pandas as pd
-from numpy import column_stack, array, hstack
+
+from numpy import column_stack, array, hstack, append
 from sklearn import preprocessing
 from sklearn.cluster import KMeans
 from uszipcode import SearchEngine
@@ -103,6 +103,9 @@ class FeatureExtractor:
         examples_unbalanced_df = windows_df[['user_id', 'positives', 'genres', 'next', 'example_age']].join(
             self.users_df['f_vec'], on='user_id').rename(
             columns={'genres': 'search', 'next': 'label', 'f_vec': 'features'})
+
+        # Inject example age into the features vector
+        examples_unbalanced_df['features'] = examples_unbalanced_df[['features', 'example_age']].apply(lambda x: append(x[0], x[1]), axis=1)
 
         # Balance training data by limiting amount of examples per user
         examples_df = balance(examples_unbalanced_df, 'user_id', False)
