@@ -24,7 +24,8 @@ _Paul Covington, Jay Adams, and Emre Sargin. 2016. Deep Neural Networks for YouT
 <div align="center"> <b>Figure 2:</b> Candidate Generation for Deep Youtube Recommendations Model </div>
 </figure>
 
-
+## Report
+* A full report of the anchor paper, background and innovative experiments is available [here](resources/Recommendation%20Systems%203693%20Final%20Project%20Report.pdf)
 
 ## Results
 * The results of our experiments can be found in the report under "Experiments"
