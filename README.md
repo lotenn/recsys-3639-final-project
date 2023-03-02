@@ -27,7 +27,7 @@ _Paul Covington, Jay Adams, and Emre Sargin. 2016. Deep Neural Networks for YouT
 
 
 ## Results
-* The results of our experiments can be found in the report under "Experiments and Evaluation"
+* The results of our experiments can be found in the report under "Experiments"
 
 ## Running the notebooks
 * GPU is highly recommended
